@@ -16,6 +16,10 @@ mongoose
 	.then(() => console.log("MongoDB 연결 성공"))
 	.catch((err) => console.error("DB 연결 실패:", err));
 
+// 라우트 연결
+const authRoutes = require("./routes/auth");
+app.use("/api/auth", authRoutes);
+
 // 기본 라우트
 app.get("/", (req, res) => {
 	res.json({ message: "🚀 서버가 실행 중입니다!" });
