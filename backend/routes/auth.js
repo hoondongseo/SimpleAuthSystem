@@ -1,6 +1,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { authenticateToken } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -105,6 +106,29 @@ router.post("/login", async (req, res) => {
 		});
 	} catch (error) {
 		console.error("로그인 에러:", error);
+		res.status(500).json({
+			success: false,
+			message: "서버 오류가 발생했습니다.",
+		});
+	}
+});
+
+// GET /api/auth/me - 현재 사용자 정보 조회
+router.get("/me", authenticateToken, (req, res) => {
+	try {
+		// authenticateToken 미들웨어가 req.user에 사용자 정보를 넣어줌!
+		res.json({
+			success: true,
+			message: "사용자 정보 조회 성공",
+			user: {
+				id: req.user._id,
+				username: req.user.username,
+				email: req.user.email,
+				createdAt: req.user.createdAt,
+			},
+		});
+	} catch (error) {
+		console.error("사용자 정보 조회 에러:", error);
 		res.status(500).json({
 			success: false,
 			message: "서버 오류가 발생했습니다.",
