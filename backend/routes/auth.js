@@ -1,6 +1,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { authenticateToken } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -45,6 +46,89 @@ router.post("/register", async (req, res) => {
 		});
 	} catch (error) {
 		console.error("회원가입 에러:", error);
+		res.status(500).json({
+			success: false,
+			message: "서버 오류가 발생했습니다.",
+		});
+	}
+});
+
+// 로그인 API
+router.post("/login", async (req, res) => {
+	try {
+		const { email, password } = req.body;
+
+		// 1. 입력값 검증
+		if (!email || !password) {
+			return res.status(400).json({
+				success: false,
+				message: "이메일과 비밀번호를 입력해주세요.",
+			});
+		}
+
+		// 2. 사용자 찾기
+		const user = await User.findOne({ email });
+		if (!user) {
+			return res.status(401).json({
+				success: false,
+				message: "이메일 또는 비밀번호가 올바르지 않습니다.",
+			});
+		}
+
+		// 3. 비밀번호 검증
+		const isPasswordValid = await user.comparePassword(password);
+		if (!isPasswordValid) {
+			return res.status(401).json({
+				success: false,
+				message: "이메일 또는 비밀번호가 올바르지 않습니다.",
+			});
+		}
+
+		// 4. JWT 토큰 생성
+		const token = jwt.sign(
+			{ userId: user._id },
+			process.env.JWT_SECRET || "your-secret-key",
+			{ expiresIn: "7d" }
+		);
+
+		// 5. 성공 응답
+		res.json({
+			success: true,
+			message: "로그인 성공!",
+			data: {
+				user: {
+					id: user._id,
+					username: user.username,
+					email: user.email,
+				},
+				token,
+			},
+		});
+	} catch (error) {
+		console.error("로그인 에러:", error);
+		res.status(500).json({
+			success: false,
+			message: "서버 오류가 발생했습니다.",
+		});
+	}
+});
+
+// GET /api/auth/me - 현재 사용자 정보 조회
+router.get("/me", authenticateToken, (req, res) => {
+	try {
+		// authenticateToken 미들웨어가 req.user에 사용자 정보를 넣어줌!
+		res.json({
+			success: true,
+			message: "사용자 정보 조회 성공",
+			user: {
+				id: req.user._id,
+				username: req.user.username,
+				email: req.user.email,
+				createdAt: req.user.createdAt,
+			},
+		});
+	} catch (error) {
+		console.error("사용자 정보 조회 에러:", error);
 		res.status(500).json({
 			success: false,
 			message: "서버 오류가 발생했습니다.",
