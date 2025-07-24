@@ -85,13 +85,22 @@ router.post("/login", async (req, res) => {
 		}
 
 		// 4. JWT 토큰 생성
-		const token = jwt.sign(
-			{ userId: user._id },
+		const accessToken = jwt.sign(
+			{ userId: user._id, type: "access" },
 			process.env.JWT_SECRET || "your-secret-key",
-			{ expiresIn: "7d" }
+			{ expiresIn: "15m" }
 		);
 
-		// 5. 성공 응답
+		const refreshToken = jwt.sign(
+			{ userId: user._id, type: "refresh" },
+			process.env.JWT_SECRET || "your-secret-key",
+			{ expiresIn: "30d" }
+		);
+
+		// 5. 리프레시 토큰을 DB에 저장
+		await user.saveRefreshToken(refreshToken);
+
+		// 6. 성공 응답 (두 토큰 모두 반환)
 		res.json({
 			success: true,
 			message: "로그인 성공!",
@@ -101,7 +110,8 @@ router.post("/login", async (req, res) => {
 					username: user.username,
 					email: user.email,
 				},
-				token,
+				accessToken,
+				refreshToken,
 			},
 		});
 	} catch (error) {
@@ -134,6 +144,87 @@ router.get("/me", authenticateToken, (req, res) => {
 			message: "서버 오류가 발생했습니다.",
 		});
 	}
+});
+
+// POST /api/auth/refresh - 토큰 갱신
+router.post("/refresh", async (req, res) => {
+	try {
+		const { refreshToken } = req.body;
+
+		// 1. 리프레시 토큰 확인
+		if (!refreshToken) {
+			return res.status(401).json({
+				success: false,
+				message: "리프레시 토큰이 필요합니다.",
+			});
+		}
+
+		// 2. 토큰 검증
+		const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+
+		// 3. DB에서 사용자 및 저장된 토큰 확인
+		const user = await User.findById(decoded.userId);
+		if (!user || user.refreshToken !== refreshToken) {
+			return res.status(401).json({
+				success: false,
+				message: "유효하지 않은 리프레시 토큰입니다.",
+			});
+		}
+
+		// 4. 새로운 엑세스 토큰 발급
+		const newAccessToken = jwt.sign(
+			{ userId: user._id, type: "access" },
+			process.env.JWT_SECRET,
+			{ expiresIn: "15m" }
+		);
+
+		// 5. 성공 응답
+		res.json({
+			success: true,
+			message: "토큰 갱신 성공",
+			accessToken: newAccessToken,
+		});
+	} catch (error) {
+		console.error("토큰 갱신 에러:", error);
+
+		if (error.name === "TokenExpiredError") {
+			return res.status(401).json({
+				success: false,
+				message: "리프레시 토큰이 만료되었습니다.",
+			});
+		}
+
+		if (error.name === "JsonWebTokenError") {
+			return res.status(401).json({
+				success: false,
+				message: "유효하지 않은 리프레시 토큰입니다.",
+			});
+		}
+
+		res.status(500).json({
+			success: false,
+			message: "서버 오류가 발생했습니다.",
+		});
+	}
+});
+
+// POST /api/auth/logout - 로그아웃
+router.post("/logout", authenticateToken, async (req, res) => {
+    try {
+        // req.user는 authenticateToken 미들웨어가 제공
+        await req.user.clearRefreshToken();
+
+        res.json({
+            success: true,
+            message: "로그아웃이 완료되었습니다.",
+        });
+    } catch (error) {
+        console.error("로그아웃 에러:", error);
+        res.status(500).json({
+            success: false,
+            message: "서버 오류가 발생했습니다.",
+        });
+    }
 });
 
 module.exports = router;
