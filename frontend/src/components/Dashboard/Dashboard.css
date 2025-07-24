@@ -1,0 +1,119 @@
+.dashboard-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 100vh;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	padding: 1rem;
+}
+
+.dashboard-card {
+	background: white;
+	padding: 3rem;
+	border-radius: 16px;
+	box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+	width: 100%;
+	max-width: 500px;
+	text-align: center;
+}
+
+.dashboard-header {
+	margin-bottom: 2.5rem;
+}
+
+.dashboard-title {
+	color: #333;
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-bottom: 0.5rem;
+}
+
+.dashboard-subtitle {
+	color: #666;
+	font-size: 1.1rem;
+}
+
+.user-info {
+	background: #f8f9fa;
+	padding: 2rem;
+	border-radius: 12px;
+	margin-bottom: 2rem;
+	display: flex;
+	align-items: center;
+	gap: 1.5rem;
+}
+
+.user-avatar {
+	flex-shrink: 0;
+}
+
+.avatar-icon {
+	display: inline-block;
+	width: 80px;
+	height: 80px;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	border-radius: 50%;
+	font-size: 2.5rem;
+	line-height: 80px;
+	color: white;
+}
+
+.user-details {
+	flex: 1;
+	text-align: left;
+}
+
+.user-name {
+	color: #333;
+	font-size: 1.8rem;
+	font-weight: 600;
+	margin-bottom: 0.5rem;
+}
+
+.user-email {
+	color: #666;
+	font-size: 1.1rem;
+	margin-bottom: 0.5rem;
+}
+
+.user-joined {
+	color: #888;
+	font-size: 0.95rem;
+}
+
+.dashboard-actions {
+	margin-top: 1.5rem;
+}
+
+.logout-button {
+	background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+	color: white;
+	border: none;
+	padding: 0.9rem 2rem;
+	border-radius: 8px;
+	font-size: 1.1rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 20px rgba(231, 76, 60, 0.3);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+	.user-info {
+		flex-direction: column;
+		text-align: center;
+	}
+
+	.user-details {
+		text-align: center;
+	}
+
+	.dashboard-card {
+		padding: 2rem;
+	}
+}
