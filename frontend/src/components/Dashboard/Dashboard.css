@@ -1,4 +1,4 @@
-/* � 다크모드 대시보드 스타일 */
+/* 다크모드 대시보드 스타일 */
 .dashboard-container {
 	display: flex;
 	justify-content: center;
@@ -270,7 +270,7 @@
 	transform: translateY(0);
 }
 
-/* 📱 반응형 디자인 */
+/* 반응형 디자인 */
 @media (max-width: 640px) {
 	.dashboard-card {
 		padding: 2rem;
@@ -348,6 +348,3 @@
 		font-size: 3rem;
 	}
 }
-
-/* 🎭 추가 애니메이션 */
-/* .dashboard-card:hover - 호버 효과 제거 */
