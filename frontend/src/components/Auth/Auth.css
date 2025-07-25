@@ -1,4 +1,4 @@
-/* � 다크모드 인증 폼 스타일 */
+/* 다크모드 인증 폼 스타일 */
 .auth-container {
 	display: flex;
 	justify-content: center;
@@ -261,7 +261,7 @@
 	}
 }
 
-/* 📱 반응형 디자인 */
+/* 반응형 디자인 */
 @media (max-width: 480px) {
 	.auth-card {
 		padding: 2rem;

@@ -1,16 +1,16 @@
 /* 전역 스타일 및 CSS 변수 */
 :root {
-	--primary-color: #4f46e5;
-	--primary-hover: #3730a3;
+	--primary-color: #3b82f6;
+	--primary-hover: #2563eb;
 	--success-color: #10b981;
 	--error-color: #ef4444;
-	--background: #f8fafc;
-	--surface: #ffffff;
-	--text-primary: #1e293b;
-	--text-secondary: #64748b;
-	--border: #e2e8f0;
-	--shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-	--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+	--background: #0f172a;
+	--surface: #1e293b;
+	--text-primary: #f1f5f9;
+	--text-secondary: #94a3b8;
+	--border: #334155;
+	--shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+	--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4);
 }
 
 /* 기본 레이아웃 - 모바일 퍼스트 */
