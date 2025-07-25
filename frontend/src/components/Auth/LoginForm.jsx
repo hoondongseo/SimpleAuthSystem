@@ -1,8 +1,9 @@
 import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import "./Auth.css";
 
-const LoginForm = ({ onSwitchToRegister }) => {
+const LoginForm = () => {
 	const [formData, setFormData] = useState({
 		email: "",
 		password: "",
@@ -11,6 +12,7 @@ const LoginForm = ({ onSwitchToRegister }) => {
 	const [error, setError] = useState("");
 
 	const { login } = useContext(AuthContext);
+	const navigate = useNavigate();
 
 	const handleChange = (e) => {
 		setFormData({
@@ -27,11 +29,17 @@ const LoginForm = ({ onSwitchToRegister }) => {
 
 		try {
 			await login(formData.email, formData.password);
+			// 로그인 성공 시 대시보드로 이동
+			navigate("/dashboard");
 		} catch (err) {
 			setError(err.response?.data?.message || "로그인에 실패했습니다.");
 		} finally {
 			setLoading(false);
 		}
+	};
+
+	const handleSwitchToRegister = () => {
+		navigate("/register");
 	};
 
 	return (
@@ -83,7 +91,7 @@ const LoginForm = ({ onSwitchToRegister }) => {
 					<button
 						type="button"
 						className="switch-button"
-						onClick={onSwitchToRegister}
+						onClick={handleSwitchToRegister}
 					>
 						회원가입
 					</button>

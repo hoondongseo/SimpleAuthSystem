@@ -1,8 +1,9 @@
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import "./Auth.css";
 
-const { useState } = require("react");
-
-const RegisterForm = ({ onSwitchToLogin }) => {
+const RegisterForm = () => {
 	const [formData, setFormData] = useState({
 		username: "",
 		email: "",
@@ -11,6 +12,8 @@ const RegisterForm = ({ onSwitchToLogin }) => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState("");
+
+	const navigate = useNavigate();
 
 	const handleChange = (e) => {
 		setFormData({
@@ -31,13 +34,17 @@ const RegisterForm = ({ onSwitchToLogin }) => {
 			await api.post("/auth/register", formData);
 			setSuccess("회원가입이 완료되었습니다! 로그인해주세요.");
 			setTimeout(() => {
-				onSwitchToLogin();
+				navigate("/login");
 			}, 2000);
 		} catch (err) {
 			setError(err.response?.data?.message || "회원가입에 실패했습니다.");
 		} finally {
 			setLoading(false);
 		}
+	};
+
+	const handleSwitchToLogin = () => {
+		navigate("/login");
 	};
 
 	return (
@@ -104,7 +111,7 @@ const RegisterForm = ({ onSwitchToLogin }) => {
 					<button
 						type="button"
 						className="switch-button"
-						onClick={onSwitchToLogin}
+						onClick={handleSwitchToLogin}
 					>
 						로그인
 					</button>
