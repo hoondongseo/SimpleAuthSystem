@@ -23,9 +23,11 @@ export const AuthProvider = ({ children }) => {
 		const res = await api.post("/auth/login", { email, password });
 		const {
 			accessToken,
+			refreshToken,
 			data: { user },
 		} = res.data;
 		localStorage.setItem("accessToken", accessToken);
+		localStorage.setItem("refreshToken", refreshToken);
 		setUser(user);
 		return res;
 	};
@@ -44,6 +46,7 @@ export const AuthProvider = ({ children }) => {
 		} finally {
 			// 어떤 경우든 로컬 상태는 정리
 			localStorage.removeItem("accessToken");
+			localStorage.removeItem("refreshToken");
 			setUser(null);
 		}
 	};
