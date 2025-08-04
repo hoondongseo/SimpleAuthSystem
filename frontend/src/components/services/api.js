@@ -23,6 +23,14 @@ api.interceptors.response.use(
 
 		// 401 에러이고, 아직 재시도하지 않은 요청이면
 		if (error.response?.status === 401 && !originalRequest._retry) {
+			// 로그인/회원가입 요청은 401이 정상적인 응답이므로 interceptor 건너뛰기
+			if (
+				originalRequest.url?.includes("/auth/login") ||
+				originalRequest.url?.includes("/auth/register")
+			) {
+				return Promise.reject(error);
+			}
+
 			originalRequest._retry = true;
 
 			try {
