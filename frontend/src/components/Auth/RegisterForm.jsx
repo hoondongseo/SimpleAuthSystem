@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import LoadingSpinner from "../common/UI/LoadingSpinner";
+import Toast from "../common/UI/Toast";
 import "./Auth.css";
 
 const RegisterForm = () => {
@@ -10,8 +12,11 @@ const RegisterForm = () => {
 		password: "",
 	});
 	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState("");
-	const [success, setSuccess] = useState("");
+	const [toast, setToast] = useState({
+		isVisible: false,
+		message: "",
+		type: "info",
+	});
 
 	const navigate = useNavigate();
 
@@ -20,24 +25,35 @@ const RegisterForm = () => {
 			...formData,
 			[e.target.name]: e.target.value,
 		});
-		if (error) setError("");
-		if (success) setSuccess("");
+	};
+
+	const showToast = (message, type) => {
+		setToast({
+			isVisible: true,
+			message,
+			type,
+		});
+	};
+
+	const closeToast = () => {
+		setToast((prev) => ({ ...prev, isVisible: false }));
 	};
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
-		setError("");
-		setSuccess("");
 
 		try {
 			await api.post("/auth/register", formData);
-			setSuccess("회원가입이 완료되었습니다! 로그인해주세요.");
+			showToast("회원가입이 완료되었습니다! 로그인해주세요.", "success");
 			setTimeout(() => {
 				navigate("/login");
 			}, 2000);
 		} catch (err) {
-			setError(err.response?.data?.message || "회원가입에 실패했습니다.");
+			showToast(
+				err.response?.data?.message || "회원가입에 실패했습니다.",
+				"error"
+			);
 		} finally {
 			setLoading(false);
 		}
@@ -52,9 +68,6 @@ const RegisterForm = () => {
 			<div className="auth-card">
 				<h1 className="auth-title">회원가입</h1>
 				<p className="auth-subtitle">새 계정을 만드세요</p>
-
-				{error && <div className="error-message">{error}</div>}
-				{success && <div className="success-message">{success}</div>}
 
 				<form onSubmit={handleSubmit} className="auth-form">
 					<div className="input-group">
@@ -102,7 +115,16 @@ const RegisterForm = () => {
 						className="auth-button"
 						disabled={loading}
 					>
-						{loading ? "가입 중..." : "회원가입"}
+						{loading ? (
+							<>
+								<LoadingSpinner size="small" color="white" />
+								<span style={{ marginLeft: "8px" }}>
+									가입 중...
+								</span>
+							</>
+						) : (
+							"회원가입"
+						)}
 					</button>
 				</form>
 
@@ -117,6 +139,15 @@ const RegisterForm = () => {
 					</button>
 				</p>
 			</div>
+
+			{/* Toast 컴포넌트 */}
+			<Toast
+				message={toast.message}
+				type={toast.type}
+				isVisible={toast.isVisible}
+				onClose={closeToast}
+				duration={3000}
+			/>
 		</div>
 	);
 };
