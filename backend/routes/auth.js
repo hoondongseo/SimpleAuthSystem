@@ -208,23 +208,95 @@ router.post("/refresh", async (req, res) => {
 	}
 });
 
+// PUT /api/auth/profile - 사용자 프로필 업데이트
+router.put("/profile", authenticateToken, async (req, res) => {
+	try {
+		const { username, email } = req.body;
+		const userId = req.user._id;
+
+		// 1. 입력값 검증
+		if (!username || !email) {
+			return res.status(400).json({
+				success: false,
+				message: "사용자명과 이메일을 모두 입력해주세요.",
+			});
+		}
+
+		// 2. 다른 사용자가 이미 사용 중인 username/email인지 확인
+		const existingUser = await User.findOne({
+			$and: [
+				{ _id: { $ne: userId } }, // 현재 사용자 제외
+				{ $or: [{ username }, { email }] },
+			],
+		});
+
+		if (existingUser) {
+			if (existingUser.username === username) {
+				return res.status(409).json({
+					success: false,
+					message: "이미 사용 중인 사용자명입니다.",
+				});
+			}
+			if (existingUser.email === email) {
+				return res.status(409).json({
+					success: false,
+					message: "이미 사용 중인 이메일입니다.",
+				});
+			}
+		}
+
+		// 3. 사용자 정보 업데이트
+		const updatedUser = await User.findByIdAndUpdate(
+			req.user._id,
+			{ username, email, updatedAt: new Date() },
+			{ new: true, select: "-password" }
+		);
+
+		if (!updatedUser) {
+			return res.status(404).json({
+				success: false,
+				message: "사용자를 찾을 수 없습니다.",
+			});
+		}
+
+		// 4. 성공 응답
+		res.json({
+			success: true,
+			message: "프로필이 성공적으로 업데이트되었습니다.",
+			user: {
+				id: updatedUser._id,
+				username: updatedUser.username,
+				email: updatedUser.email,
+				createdAt: updatedUser.createdAt,
+				updatedAt: updatedUser.updatedAt,
+			},
+		});
+		
+	} catch (error) {
+		console.error("프로필 업데이트 에러:", error);
+		res.status(500).json({
+			success: false,
+			message: "서버 오류가 발생했습니다.",
+		});
+	}
+});
 // POST /api/auth/logout - 로그아웃
 router.post("/logout", authenticateToken, async (req, res) => {
-    try {
-        // req.user는 authenticateToken 미들웨어가 제공
-        await req.user.clearRefreshToken();
+	try {
+		// req.user는 authenticateToken 미들웨어가 제공
+		await req.user.clearRefreshToken();
 
-        res.json({
-            success: true,
-            message: "로그아웃이 완료되었습니다.",
-        });
-    } catch (error) {
-        console.error("로그아웃 에러:", error);
-        res.status(500).json({
-            success: false,
-            message: "서버 오류가 발생했습니다.",
-        });
-    }
+		res.json({
+			success: true,
+			message: "로그아웃이 완료되었습니다.",
+		});
+	} catch (error) {
+		console.error("로그아웃 에러:", error);
+		res.status(500).json({
+			success: false,
+			message: "서버 오류가 발생했습니다.",
+		});
+	}
 });
 
 module.exports = router;
