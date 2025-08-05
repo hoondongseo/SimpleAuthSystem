@@ -209,7 +209,29 @@
 	font-size: 1.1rem;
 }
 
+.profile-button {
+	padding: 0.75rem 1.5rem;
+	background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+	color: white;
+	border: none;
+	border-radius: 10px;
+	font-size: 1rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	margin-right: 1rem;
+}
+
+.profile-button:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
 .dashboard-actions {
+	display: flex;
+	gap: 1rem;
+	justify-content: center;
+	flex-wrap: wrap;
 	margin-top: 2rem;
 	animation: buttonSlide 0.8s ease-out 0.8s both;
 }

@@ -10,6 +10,7 @@ import LoginForm from "./components/Auth/LoginForm";
 import RegisterForm from "./components/Auth/RegisterForm";
 import Dashboard from "./components/Dashboard/Dashboard";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import Profile from "./components/Profile/Profile";
 import "./App.css";
 
 function App() {
@@ -60,6 +61,15 @@ function App() {
 							) : (
 								<Navigate to="/login" replace />
 							)
+						}
+					/>
+
+					<Route
+						path="/profile"
+						element={
+							<ProtectedRoute>
+								<Profile />
+							</ProtectedRoute>
 						}
 					/>
 				</Routes>

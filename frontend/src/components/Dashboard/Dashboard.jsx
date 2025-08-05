@@ -1,4 +1,5 @@
 import React, { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import LoadingSpinner from "../common/UI/LoadingSpinner";
 import Toast from "../common/UI/Toast";
@@ -6,6 +7,7 @@ import "./Dashboard.css";
 
 const Dashboard = () => {
 	const { user, logout } = useContext(AuthContext);
+	const navigate = useNavigate();
 	const [loading, setLoading] = useState(false);
 	const [toast, setToast] = useState({
 		isVisible: false,
@@ -43,6 +45,10 @@ const Dashboard = () => {
 		}
 	};
 
+	const handleProfileClick = () => {
+		navigate("/profile");
+	};
+
 	return (
 		<div className="dashboard-container">
 			<div className="dashboard-card">
@@ -70,6 +76,12 @@ const Dashboard = () => {
 				</div>
 
 				<div className="dashboard-actions">
+					<button
+						onClick={handleProfileClick}
+						className="profile-button"
+					>
+						프로필 설정
+					</button>
 					<button
 						onClick={handleLogout}
 						className="logout-button"
