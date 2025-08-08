@@ -1,59 +1,63 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const User = require("../models/User");
-const { authenticateToken } = require("../middleware/auth");
 const { sendVerificationEmail } = require("../services/emailService");
+const { authenticateToken } = require("../middleware/auth");
 
 const router = express.Router();
 
-// 회원가입 API
+// 회원가입 API (이메일 인증 추가)
 router.post("/register", async (req, res) => {
 	try {
 		const { username, email, password } = req.body;
 
-		// 1. 입력값 검증
-		if (!username || !email || !password) {
-			return res.status(400).json({
-				success: false,
-				message: "모든 필드를 입력해주세요.",
-			});
-		}
-
-		// 2. 기존 사용자 확인
+		// 1. 중복 검사
 		const existingUser = await User.findOne({
 			$or: [{ email }, { username }],
 		});
 
 		if (existingUser) {
-			return res.status(409).json({
+			return res.status(400).json({
 				success: false,
-				message: "이미 존재하는 사용자입니다.",
+				message: "이미 존재하는 이메일 또는 사용자명입니다.",
 			});
 		}
 
-		// 3. 새 사용자 생성
-		const user = new User({ username, email, password });
+		// 2. 사용자 생성
+		const user = new User({
+			username,
+			email,
+			password,
+		});
 
-		// 4. 이메일 인증 토큰 생성
+		// 3. 이메일 인증 토큰 생성
 		const verificationToken = user.generateEmailVerificationToken();
 		await user.save();
 
-		// 5. 인증 이메일 발송
+		// 4. 인증 이메일 발송
 		try {
-			await sendVerificationEmail(user.email, verificationToken);
+			await sendVerificationEmail(email, verificationToken);
 		} catch (emailError) {
 			console.error("이메일 발송 실패:", emailError);
-			// 이메일 발송 실패해도 회원가입은 성공으로 처리
+			// 사용자는 생성했지만 이메일 발송 실패
+			return res.status(500).json({
+				success: false,
+				message:
+					"회원가입은 완료되었지만 인증 이메일 발송에 실패했습니다. 다시 시도해주세요.",
+			});
 		}
 
-		// 6. 성공 응답
 		res.status(201).json({
 			success: true,
-			message: "회원가입이 완료되었습니다! 이메일을 확인해주세요.",
-			user: {
-				id: user._id,
-				username: user.username,
-				email: user.email,
+			message:
+				"회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.",
+			data: {
+				user: {
+					id: user._id,
+					username: user.username,
+					email: user.email,
+				},
 			},
 		});
 	} catch (error) {
@@ -65,16 +69,16 @@ router.post("/register", async (req, res) => {
 	}
 });
 
-// 로그인 API
+// 로그인 API (이메일 인증 확인 추가)
 router.post("/login", async (req, res) => {
 	try {
 		const { email, password } = req.body;
 
-		// 1. 입력값 검증
+		// 1. 입력 검증
 		if (!email || !password) {
 			return res.status(400).json({
 				success: false,
-				message: "이메일과 비밀번호를 입력해주세요.",
+				message: "이메일과 비밀번호를 모두 입력해주세요.",
 			});
 		}
 
@@ -124,7 +128,7 @@ router.post("/login", async (req, res) => {
 		// 6. 리프레시 토큰을 DB에 저장
 		await user.saveRefreshToken(refreshToken);
 
-		// 7. 성공 응답 (두 토큰 모두 반환)
+		// 7. 성공 응답 (createdAt 포함)
 		res.json({
 			success: true,
 			message: "로그인 성공!",
@@ -189,7 +193,11 @@ router.post("/refresh", async (req, res) => {
 
 		// 3. DB에서 사용자 및 저장된 토큰 확인
 		const user = await User.findById(decoded.userId);
-		if (!user || user.refreshToken !== refreshToken) {
+		const storedToken = user?.refreshTokens?.find(
+			(t) => t.token === refreshToken
+		);
+
+		if (!user || !storedToken) {
 			return res.status(401).json({
 				success: false,
 				message: "유효하지 않은 리프레시 토큰입니다.",
@@ -324,7 +332,7 @@ router.post("/logout", authenticateToken, async (req, res) => {
 	}
 });
 
-// POST /api/auth/resend-verification - 이메일 인증 재발송
+// 인증 이메일 재발송 API
 router.post("/resend-verification", async (req, res) => {
 	try {
 		const { email } = req.body;
@@ -373,7 +381,7 @@ router.post("/resend-verification", async (req, res) => {
 	}
 });
 
-// GET /api/auth/verify-email - 이메일 인증 완료
+// 이메일 인증 처리 API
 router.get("/verify-email", async (req, res) => {
 	try {
 		const { token } = req.query;
@@ -385,25 +393,30 @@ router.get("/verify-email", async (req, res) => {
 			});
 		}
 
-		// 토큰으로 사용자 찾기
+		// 토큰 해싱
+		const hashedToken = crypto
+			.createHash("sha256")
+			.update(token)
+			.digest("hex");
+
+		// 사용자 찾기
 		const user = await User.findOne({
-			emailVerificationToken: token,
-			emailVerificationExpires: { $gt: Date.now() },
-		});
+			emailVerificationToken: hashedToken,
+		}).select("+emailVerificationExpires");
 
 		if (!user) {
 			return res.status(400).json({
 				success: false,
-				message:
-					"토큰을 찾을 수 없습니다. 이미 인증이 완료되었거나 토큰이 만료되었을 수 있습니다.",
+				message: "유효하지 않은 인증 토큰입니다.",
 			});
 		}
 
-		// 이미 인증된 경우
-		if (user.isEmailVerified) {
+		// 토큰 만료 확인
+		if (!user.isEmailVerificationTokenValid()) {
 			return res.status(400).json({
 				success: false,
-				message: "이미 인증이 완료된 계정입니다.",
+				message:
+					"인증 토큰이 만료되었습니다. 새로운 인증 이메일을 요청해주세요.",
 			});
 		}
 
