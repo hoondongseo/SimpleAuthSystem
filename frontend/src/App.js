@@ -11,6 +11,8 @@ import RegisterForm from "./components/Auth/RegisterForm";
 import Dashboard from "./components/Dashboard/Dashboard";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import Profile from "./components/Profile/Profile";
+import EmailVerification from "./components/Auth/EmailVerification";
+import EmailVerified from "./components/Auth/EmailVerified";
 import "./App.css";
 
 function App() {
@@ -72,6 +74,20 @@ function App() {
 							</ProtectedRoute>
 						}
 					/>
+
+					<Route
+						path="/email-verification"
+						element={
+							user ? (
+								<Navigate to="/dashboard" replace />
+							) : (
+								<EmailVerification />
+							)
+						}
+					/>
+
+					{/* 이메일 인증 완료 페이지 - 로그인 상태와 무관하게 접근 가능 */}
+					<Route path="/verify-email" element={<EmailVerified />} />
 				</Routes>
 			</div>
 		</Router>

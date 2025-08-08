@@ -54,13 +54,26 @@ const LoginForm = () => {
 			// 성공 시에는 Toast 없이 즉시 대시보드로 이동
 			navigate("/dashboard");
 		} catch (err) {
+			// 이메일 인증 필요한 경우 특별 처리
+			if (err.response?.data?.emailVerificationRequired) {
+				showToast(err.response.data.message, "warning");
+
+				// 3초 후 이메일 인증 페이지로 이동
+				setTimeout(() => {
+					navigate("/email-verification", {
+						state: { email: err.response.data.email },
+					});
+				}, 3000);
+				return;
+			}
+
+			// 일반적인 로그인 실패
 			showToast(
 				err.response?.data?.message || "로그인에 실패했습니다.",
 				"error"
 			);
 			// 실패 시에는 navigate 하지 않음
 			// 폼 데이터는 그대로 유지 (명시적으로 보존)
-			console.log("로그인 실패 - 폼 데이터 유지:", formData);
 		} finally {
 			setLoading(false);
 		}

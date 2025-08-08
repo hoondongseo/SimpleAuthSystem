@@ -42,12 +42,16 @@ const RegisterForm = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
-
 		try {
 			await api.post("/auth/register", formData);
-			showToast("회원가입이 완료되었습니다! 로그인해주세요.", "success");
+			showToast(
+				"회원가입이 완료되었습니다! 이메일을 확인해주세요.",
+				"success"
+			);
 			setTimeout(() => {
-				navigate("/login");
+				navigate("/email-verification", {
+					state: { email: formData.email },
+				});
 			}, 2000);
 		} catch (err) {
 			showToast(

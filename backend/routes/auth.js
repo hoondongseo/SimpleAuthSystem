@@ -2,6 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { authenticateToken } = require("../middleware/auth");
+const { sendVerificationEmail } = require("../services/emailService");
 
 const router = express.Router();
 
@@ -32,12 +33,23 @@ router.post("/register", async (req, res) => {
 
 		// 3. 새 사용자 생성
 		const user = new User({ username, email, password });
+
+		// 4. 이메일 인증 토큰 생성
+		const verificationToken = user.generateEmailVerificationToken();
 		await user.save();
 
-		// 4. 성공 응답
+		// 5. 인증 이메일 발송
+		try {
+			await sendVerificationEmail(user.email, verificationToken);
+		} catch (emailError) {
+			console.error("이메일 발송 실패:", emailError);
+			// 이메일 발송 실패해도 회원가입은 성공으로 처리
+		}
+
+		// 6. 성공 응답
 		res.status(201).json({
 			success: true,
-			message: "회원가입이 성공적으로 완료되었습니다!",
+			message: "회원가입이 완료되었습니다! 이메일을 확인해주세요.",
 			user: {
 				id: user._id,
 				username: user.username,
@@ -66,8 +78,9 @@ router.post("/login", async (req, res) => {
 			});
 		}
 
-		// 2. 사용자 찾기
-		const user = await User.findOne({ email });
+		// 2. 사용자 찾기 (비밀번호 포함)
+		const user = await User.findOne({ email }).select("+password");
+
 		if (!user) {
 			return res.status(401).json({
 				success: false,
@@ -77,6 +90,7 @@ router.post("/login", async (req, res) => {
 
 		// 3. 비밀번호 검증
 		const isPasswordValid = await user.comparePassword(password);
+
 		if (!isPasswordValid) {
 			return res.status(401).json({
 				success: false,
@@ -84,7 +98,17 @@ router.post("/login", async (req, res) => {
 			});
 		}
 
-		// 4. JWT 토큰 생성
+		// 4. 이메일 인증 확인
+		if (!user.isEmailVerified) {
+			return res.status(403).json({
+				success: false,
+				message: "이메일 인증이 필요합니다. 이메일을 확인해주세요.",
+				emailVerificationRequired: true,
+				email: user.email,
+			});
+		}
+
+		// 5. JWT 토큰 생성
 		const accessToken = jwt.sign(
 			{ userId: user._id, type: "access" },
 			process.env.JWT_SECRET || "your-secret-key",
@@ -97,10 +121,10 @@ router.post("/login", async (req, res) => {
 			{ expiresIn: "30d" }
 		);
 
-		// 5. 리프레시 토큰을 DB에 저장
+		// 6. 리프레시 토큰을 DB에 저장
 		await user.saveRefreshToken(refreshToken);
 
-		// 6. 성공 응답 (두 토큰 모두 반환)
+		// 7. 성공 응답 (두 토큰 모두 반환)
 		res.json({
 			success: true,
 			message: "로그인 성공!",
@@ -109,6 +133,7 @@ router.post("/login", async (req, res) => {
 					id: user._id,
 					username: user.username,
 					email: user.email,
+					createdAt: user.createdAt,
 				},
 				accessToken,
 				refreshToken,
@@ -271,7 +296,6 @@ router.put("/profile", authenticateToken, async (req, res) => {
 				updatedAt: updatedUser.updatedAt,
 			},
 		});
-		
 	} catch (error) {
 		console.error("프로필 업데이트 에러:", error);
 		res.status(500).json({
@@ -280,6 +304,7 @@ router.put("/profile", authenticateToken, async (req, res) => {
 		});
 	}
 });
+
 // POST /api/auth/logout - 로그아웃
 router.post("/logout", authenticateToken, async (req, res) => {
 	try {
@@ -292,6 +317,106 @@ router.post("/logout", authenticateToken, async (req, res) => {
 		});
 	} catch (error) {
 		console.error("로그아웃 에러:", error);
+		res.status(500).json({
+			success: false,
+			message: "서버 오류가 발생했습니다.",
+		});
+	}
+});
+
+// POST /api/auth/resend-verification - 이메일 인증 재발송
+router.post("/resend-verification", async (req, res) => {
+	try {
+		const { email } = req.body;
+
+		if (!email) {
+			return res.status(400).json({
+				success: false,
+				message: "이메일이 필요합니다.",
+			});
+		}
+
+		// 사용자 찾기
+		const user = await User.findOne({ email });
+		if (!user) {
+			return res.status(404).json({
+				success: false,
+				message: "해당 이메일로 등록된 사용자가 없습니다.",
+			});
+		}
+
+		// 이미 인증된 경우
+		if (user.isEmailVerified) {
+			return res.status(400).json({
+				success: false,
+				message: "이미 이메일 인증이 완료된 계정입니다.",
+			});
+		}
+
+		// 새로운 인증 토큰 생성
+		const verificationToken = user.generateEmailVerificationToken();
+		await user.save();
+
+		// 인증 이메일 발송
+		await sendVerificationEmail(email, verificationToken);
+
+		res.json({
+			success: true,
+			message: "인증 이메일이 재발송되었습니다.",
+		});
+	} catch (error) {
+		console.error("이메일 재발송 에러:", error);
+		res.status(500).json({
+			success: false,
+			message: "이메일 발송에 실패했습니다.",
+		});
+	}
+});
+
+// GET /api/auth/verify-email - 이메일 인증 완료
+router.get("/verify-email", async (req, res) => {
+	try {
+		const { token } = req.query;
+
+		if (!token) {
+			return res.status(400).json({
+				success: false,
+				message: "인증 토큰이 필요합니다.",
+			});
+		}
+
+		// 토큰으로 사용자 찾기
+		const user = await User.findOne({
+			emailVerificationToken: token,
+			emailVerificationExpires: { $gt: Date.now() },
+		});
+
+		if (!user) {
+			return res.status(400).json({
+				success: false,
+				message:
+					"토큰을 찾을 수 없습니다. 이미 인증이 완료되었거나 토큰이 만료되었을 수 있습니다.",
+			});
+		}
+
+		// 이미 인증된 경우
+		if (user.isEmailVerified) {
+			return res.status(400).json({
+				success: false,
+				message: "이미 인증이 완료된 계정입니다.",
+			});
+		}
+
+		// 이메일 인증 완료
+		user.verifyEmail();
+		await user.save();
+
+		res.json({
+			success: true,
+			message: "이메일 인증이 완료되었습니다! 이제 로그인할 수 있습니다.",
+		});
+	} catch (error) {
+		console.error("이메일 인증 에러:", error);
 		res.status(500).json({
 			success: false,
 			message: "서버 오류가 발생했습니다.",
