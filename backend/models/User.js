@@ -6,35 +6,22 @@ const userSchema = new mongoose.Schema(
 	{
 		username: {
 			type: String,
-			required: [true, "사용자명이 필요합니다."],
+			required: [true, "사용자명은 필수입니다"],
 			unique: true,
 			trim: true,
-			minlength: [2, "사용자명은 최소 2자 이상이어야 합니다"],
-			maxlength: [20, "사용자명은 최대 20자까지 가능합니다"],
 		},
-
 		email: {
 			type: String,
-			required: [true, "이메일이 필요합니다."],
+			required: [true, "이메일은 필수입니다"],
 			unique: true,
 			lowercase: true,
-			trim: true,
-			match: [
-				/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-				"올바른 이메일 형식을 입력해주세요",
-			],
 		},
 
 		password: {
 			type: String,
-			required: [true, "비밀번호가 필요합니다."],
-			minlength: [6, "비밀번호는 최소 6자 이상이어야 합니다."],
+			required: [true, "비밀번호는 필수입니다"],
+			minlength: 6,
 			select: false, // 기본적으로 조회 시 제외
-		},
-
-		refreshToken: {
-			type: String,
-			default: null,
 		},
 
 		// 이메일 인증 관련 필드
@@ -45,13 +32,23 @@ const userSchema = new mongoose.Schema(
 
 		emailVerificationToken: {
 			type: String,
-			default: null,
+			select: false,
 		},
 
 		emailVerificationExpires: {
 			type: Date,
-			default: null,
+			select: false,
 		},
+
+		refreshTokens: [
+			{
+				token: String,
+				createdAt: {
+					type: Date,
+					default: Date.now,
+				},
+			},
+		],
 	},
 	{
 		timestamps: true, // createdAt, updatedAt 자동 생성
@@ -60,63 +57,57 @@ const userSchema = new mongoose.Schema(
 
 // 비밀번호 해싱 미들웨어
 userSchema.pre("save", async function (next) {
-	// 비밀번호가 수정되지 않았으면 다음으로
 	if (!this.isModified("password")) return next();
 
-	try {
-		// 비밀번호 해싱
-		const salt = await bcrypt.genSalt(12);
-		this.password = await bcrypt.hash(this.password, salt);
-		next();
-	} catch (error) {
-		next(error);
-	}
+	this.password = await bcrypt.hash(this.password, 12);
+	next();
 });
 
 // 비밀번호 비교 메서드
 userSchema.methods.comparePassword = async function (candidatePassword) {
-	try {
-		return await bcrypt.compare(candidatePassword, this.password);
-	} catch (error) {
-		throw error;
-	}
+	return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // 리프레시 토큰 저장 메서드
 userSchema.methods.saveRefreshToken = async function (token) {
-	this.refreshToken = token;
+	this.refreshTokens.push({
+		token: token,
+		createdAt: new Date(),
+	});
 	return await this.save();
 };
 
 // 리프레시 토큰 제거 메서드
 userSchema.methods.clearRefreshToken = async function () {
-	this.refreshToken = null;
+	this.refreshTokens = [];
 	return await this.save();
 };
 
-// 이메일 인증 토큰 생성 메서드
+// 이메일 인증 토큰 생성
 userSchema.methods.generateEmailVerificationToken = function () {
 	const token = crypto.randomBytes(32).toString("hex");
 
-	this.emailVerificationToken = token;
-	this.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24시간 유효
+	this.emailVerificationToken = crypto
+		.createHash("sha256")
+		.update(token)
+		.digest("hex");
 
-	return token;
+	// 24시간 후 만료
+	this.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
+
+	return token; // 해싱되지 않은 토큰 반환 (이메일 링크용)
 };
 
-// 이메일 인증 완료 메서드
+// 이메일 인증 처리
 userSchema.methods.verifyEmail = function () {
 	this.isEmailVerified = true;
-	this.emailVerificationToken = null;
-	this.emailVerificationExpires = null;
+	this.emailVerificationToken = undefined;
+	this.emailVerificationExpires = undefined;
 };
 
-// 이메일 인증 토큰 확인 메서드
-userSchema.methods.isEmailVerificationTokenValid = function (token) {
-	return (
-		this.emailVerificationToken === token &&
-		this.emailVerificationExpires > Date.now()
-	);
+// 이메일 인증 토큰 유효성 검사
+userSchema.methods.isEmailVerificationTokenValid = function () {
+	return this.emailVerificationExpires > Date.now();
 };
 
 const User = mongoose.model("User", userSchema);

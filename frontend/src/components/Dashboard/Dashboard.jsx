@@ -68,10 +68,11 @@ const Dashboard = () => {
 						<p className="user-email">{user?.email}</p>
 						<p className="user-joined">
 							가입일:{" "}
-							{user?.createdAt 
-								? new Date(user.createdAt).toLocaleDateString("ko-KR")
-								: "정보 없음"
-							}
+							{user?.createdAt
+								? new Date(user.createdAt).toLocaleDateString(
+										"ko-KR"
+								  )
+								: "정보 없음"}
 						</p>
 					</div>
 				</div>
