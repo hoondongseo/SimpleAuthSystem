@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import api from "../services/api";
 import LoadingSpinner from "../common/UI/LoadingSpinner";
+import "./PasswordChange.css";
 
 const ProfileEdit = ({ user, onUpdateSuccess, onCancel, showToast }) => {
 	const [formData, setFormData] = useState({
-		username: user.username,
+		name: user.name,
 		email: user.email,
 	});
 	const [loading, setLoading] = useState(false);
@@ -31,8 +32,8 @@ const ProfileEdit = ({ user, onUpdateSuccess, onCancel, showToast }) => {
 	const validateForm = () => {
 		const newErrors = {};
 
-		if (!formData.username.trim()) {
-			newErrors.username = "사용자명을 입력해주세요.";
+		if (!formData.name.trim()) {
+			newErrors.name = "이름을 입력해주세요.";
 		}
 
 		if (!formData.email.trim()) {
@@ -54,10 +55,7 @@ const ProfileEdit = ({ user, onUpdateSuccess, onCancel, showToast }) => {
 		}
 
 		// 변경사항이 없는 경우
-		if (
-			formData.username === user.username &&
-			formData.email === user.email
-		) {
+		if (formData.name === user.name && formData.email === user.email) {
 			showToast("변경된 내용이 없습니다.", "info");
 			return;
 		}
@@ -89,23 +87,23 @@ const ProfileEdit = ({ user, onUpdateSuccess, onCancel, showToast }) => {
 
 	return (
 		<form onSubmit={handleSubmit} className="profile-edit-form">
-			<div className="input-group">
-				<label htmlFor="username">사용자명</label>
+			<div className="form-group">
+				<label htmlFor="name">이름</label>
 				<input
 					type="text"
-					id="username"
-					name="username"
-					value={formData.username}
+					id="name"
+					name="name"
+					value={formData.name}
 					onChange={handleChange}
-					className={errors.username ? "error" : ""}
-					placeholder="사용자명을 입력하세요"
+					className={errors.name ? "error" : ""}
+					placeholder="이름을 입력하세요"
 				/>
-				{errors.username && (
-					<span className="error-text">{errors.username}</span>
+				{errors.name && (
+					<span className="error-text">{errors.name}</span>
 				)}
 			</div>
 
-			<div className="input-group">
+			<div className="form-group">
 				<label htmlFor="email">이메일</label>
 				<input
 					type="email"

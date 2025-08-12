@@ -4,10 +4,9 @@ const crypto = require("crypto");
 
 const userSchema = new mongoose.Schema(
 	{
-		username: {
+		name: {
 			type: String,
-			required: [true, "사용자명은 필수입니다"],
-			unique: true,
+			required: [true, "이름은 필수입니다"],
 			trim: true,
 		},
 		email: {

@@ -64,7 +64,7 @@ const Dashboard = () => {
 						<span className="avatar-icon">👤</span>
 					</div>
 					<div className="user-details">
-						<h2 className="user-name">{user?.username}</h2>
+						<h2 className="user-name">{user?.name}</h2>
 						<p className="user-email">{user?.email}</p>
 						<p className="user-joined">
 							가입일:{" "}
