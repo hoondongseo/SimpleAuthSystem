@@ -58,11 +58,44 @@
 
 .profile-header {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
+	justify-content: center;
+	position: relative;
 	margin-bottom: 2rem;
 	padding-bottom: 1rem;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.back-button {
+	position: absolute;
+	left: 0;
+	top: 0;
+	background: rgba(59, 130, 246, 0.1);
+	border: 1px solid rgba(59, 130, 246, 0.3);
+	color: #60a5fa;
+	width: 36px;
+	height: 36px;
+	border-radius: 8px;
+	font-size: 1.2rem;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	-webkit-backdrop-filter: blur(10px);
+	backdrop-filter: blur(10px);
+}
+
+.back-button:hover {
+	background: rgba(59, 130, 246, 0.2);
+	border-color: rgba(59, 130, 246, 0.5);
+	color: #93c5fd;
+	transform: translateX(-2px);
+	box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.back-button:active {
+	transform: translateX(-1px);
 }
 
 .profile-title {
@@ -74,6 +107,20 @@
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;
 	background-clip: text;
+	text-align: center;
+	transition: all 0.3s ease;
+	animation: titleChange 0.3s ease-out;
+}
+
+@keyframes titleChange {
+	0% {
+		opacity: 0;
+		transform: translateY(-8px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 .edit-button {
@@ -93,11 +140,129 @@
 	box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
 }
 
+/* 프로필 액션 버튼들 */
+.profile-actions {
+	display: flex;
+	gap: 1rem;
+	justify-content: center;
+	margin-top: 2rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.edit-button {
+	padding: 12px 24px;
+	background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+	color: white;
+	border: none;
+	border-radius: 10px;
+	font-size: 0.95rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+	position: relative;
+	overflow: hidden;
+}
+
+.edit-button::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(255, 255, 255, 0.2),
+		transparent
+	);
+	transition: left 0.5s;
+}
+
+.edit-button:hover::before {
+	left: 100%;
+}
+
+.edit-button:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 12px 24px rgba(59, 130, 246, 0.5),
+		0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+.edit-button:active {
+	transform: translateY(0);
+}
+
+.password-change-button {
+	padding: 12px 24px;
+	background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+	color: white;
+	border: none;
+	border-radius: 10px;
+	font-size: 0.95rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+	position: relative;
+	overflow: hidden;
+}
+
+.password-change-button::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(255, 255, 255, 0.2),
+		transparent
+	);
+	transition: left 0.5s;
+}
+
+.password-change-button:hover::before {
+	left: 100%;
+}
+
+.password-change-button:hover {
+	background: linear-gradient(135deg, #475569 0%, #334155 100%);
+	transform: translateY(-3px);
+	box-shadow: 0 12px 24px rgba(100, 116, 139, 0.5),
+		0 4px 8px rgba(100, 116, 139, 0.4);
+}
+
+.password-change-button:active {
+	transform: translateY(0);
+}
+
+/* 프로필 콘텐츠 전환 애니메이션 */
+.profile-content-transition {
+	animation: contentSlideIn 0.4s ease-out;
+}
+
+@keyframes contentSlideIn {
+	0% {
+		opacity: 0;
+		transform: translateY(15px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
 /* 프로필 정보 표시 */
 .profile-info {
 	display: flex;
 	flex-direction: column;
 	gap: 1.5rem;
+	margin-bottom: 1rem;
 }
 
 .info-group {
@@ -130,6 +295,17 @@
 	gap: 1.5rem;
 }
 
+@keyframes slideUp {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
 .input-group {
 	display: flex;
 	flex-direction: column;
@@ -138,23 +314,28 @@
 }
 
 .input-group input {
-	padding: 1rem;
-	border: 2px solid #374151;
-	border-radius: 12px;
+	padding: 12px 16px;
+	border: 2px solid rgba(255, 255, 255, 0.1);
+	border-radius: 8px;
 	font-size: 1rem;
+	background: rgba(255, 255, 255, 0.05);
+	color: #e0e6ed;
 	transition: all 0.3s ease;
-	background: #1f2937;
-	color: #f9fafb;
-	font-family: inherit;
+}
+
+.input-group input::placeholder {
+	color: #6c7378;
 }
 
 .input-group input:focus {
 	outline: none;
 	border-color: #3b82f6;
-	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2),
-		0 2px 4px rgba(59, 130, 246, 0.1);
-	background: #111827;
-	transform: translateY(-1px);
+	background: rgba(59, 130, 246, 0.1);
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.input-group input:valid {
+	border-color: rgba(255, 255, 255, 0.1);
 }
 
 .input-group input.error {
@@ -190,23 +371,76 @@
 }
 
 .cancel-button {
-	background: #6b7280;
+	background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
 	color: white;
+	box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
+}
+
+.cancel-button::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(255, 255, 255, 0.2),
+		transparent
+	);
+	transition: left 0.5s;
+}
+
+.cancel-button:hover::before {
+	left: 100%;
 }
 
 .cancel-button:hover:not(:disabled) {
-	background: #9ca3af;
-	transform: translateY(-1px);
+	background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+	transform: translateY(-3px);
+	box-shadow: 0 12px 24px rgba(107, 114, 128, 0.5),
+		0 4px 8px rgba(107, 114, 128, 0.4);
+}
+
+.cancel-button:active {
+	transform: translateY(0);
 }
 
 .save-button {
 	background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
 	color: white;
+	box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.save-button::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(255, 255, 255, 0.2),
+		transparent
+	);
+	transition: left 0.5s;
+}
+
+.save-button:hover::before {
+	left: 100%;
 }
 
 .save-button:hover:not(:disabled) {
-	transform: translateY(-2px);
-	box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+	transform: translateY(-3px);
+	box-shadow: 0 12px 24px rgba(59, 130, 246, 0.5),
+		0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+.save-button:active {
+	transform: translateY(0);
 }
 
 .cancel-button:disabled,
@@ -237,14 +471,26 @@
 		font-size: 1.8rem;
 	}
 
-	.button-group {
-		flex-direction: column;
+	.back-button {
+		width: 32px;
+		height: 32px;
+		font-size: 1rem;
 	}
 
-	.profile-header {
+	.profile-actions {
 		flex-direction: column;
-		gap: 1rem;
-		align-items: flex-start;
+		gap: 0.8rem;
+		width: 100%;
+	}
+
+	.edit-button,
+	.password-change-button {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.button-group {
+		flex-direction: column;
 	}
 }
 
@@ -256,5 +502,11 @@
 
 	.profile-title {
 		font-size: 2.4rem;
+	}
+
+	.back-button {
+		width: 40px;
+		height: 40px;
+		font-size: 1.3rem;
 	}
 }

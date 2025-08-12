@@ -100,6 +100,7 @@ const LoginForm = () => {
 							onChange={handleChange}
 							required
 							placeholder="your@email.com"
+							autoComplete="email"
 						/>
 					</div>
 
@@ -113,6 +114,7 @@ const LoginForm = () => {
 							onChange={handleChange}
 							required
 							placeholder="••••••••"
+							autoComplete="current-password"
 						/>
 					</div>
 

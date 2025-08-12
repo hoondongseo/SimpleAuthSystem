@@ -69,4 +69,10 @@ api.interceptors.response.use(
 	}
 );
 
+// 비밀번호 변경 API
+export const changePassword = async(passwordData) => {
+	const response = await api.put("/auth/change-password", passwordData);
+	return response.data;
+};
+
 export default api;
